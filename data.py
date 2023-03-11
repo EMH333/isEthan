@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+import gzip
 
 
 def get_combinations():
@@ -48,8 +49,9 @@ def record(out, is_ethan, data):
 
 
 def iterate_analyse(output_csv, full_text, is_ethan):
+    length = 700
     # every 700 characters do a split
-    for text in split(full_text, 700):
+    for text in split(full_text, length):
         hashmap = analyze(text)
         record(output_csv, is_ethan, hashmap)
 
@@ -64,25 +66,41 @@ def iterate_analyse(output_csv, full_text, is_ethan):
         record(output_csv, is_ethan, hashmap)
         hashmap_new = analyze(text)
         record(output_csv, is_ethan, hashmap_new)
+    
+    # do an offset of half the length to mix up the data a bit more
+    if len(full_text) > length * 1.5:
+        iterate_analyse(output_csv, full_text[round(length*0.5):], is_ethan)
 
+
+def into_form(test_text):
+    wordmap = analyze(test_text)
+    inp = list()
+    for i in combos:
+        try:
+            inp.append(wordmap[i])
+        except KeyError:
+            inp.append(0)
+    return inp
+
+
+def normalize(fh):
+    # only allow alphabet and underscores, remove multiple spaces and lowercase
+    lines = re.sub('[^a-z_]+', '_',
+                       " ".join(" ".join(str(x) for x in fh.readlines()).split())
+                       .replace(" ", "_").lower())
+    return lines
 
 if __name__ == '__main__':
-    gramsFile = open('data/grams.data', 'w')
+    gramsFile = gzip.open('data/grams.data.gz', 'wt')
     output = csv.writer(gramsFile)
     # load from data/raw, analyze, then put into grams.data
     for file in os.listdir("data/raw/isEthan"):
         f = os.path.join("data/raw/isEthan", file)
         fh = open(f, "r")
-        # only allow alphabet and underscores, remove multiple spaces and lowercase
-        lines = re.sub('[^a-z_]+', '_',
-                       " ".join(" ".join(str(x) for x in fh.readlines()).split())
-                       .replace(" ", "_").lower())
+        lines = normalize(fh)
         iterate_analyse(output, lines, True)
     for file in os.listdir("data/raw/notEthan"):
         f = os.path.join("data/raw/notEthan", file)
         fh = open(f, "r")
-        # only allow alphabet and underscores, remove multiple spaces and lowercase
-        lines = re.sub('[^a-z_]+', '_',
-                       " ".join(" ".join(str(x) for x in fh.readlines()).split())
-                       .replace(" ", "_").lower())
+        lines = normalize(fh)
         iterate_analyse(output, lines, False)
