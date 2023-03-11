@@ -6,10 +6,10 @@ import gzip
 
 def get_combinations():
     combinations = list()
-    alphabet = "abcdefghijklmnopqrstuvwxyz_"
-    for a in range(26):
-        for b in range(26):
-            for c in range(26):
+    alphabet = "abcdefghijklmnopqrstuvwxyz_,.()"
+    for a in range(len(alphabet)):
+        for b in range(len(alphabet)):
+            for c in range(len(alphabet)):
                 combinations.append(alphabet[a] + alphabet[b] + alphabet[c])
     return combinations
 
@@ -84,8 +84,8 @@ def into_form(test_text):
 
 
 def normalize(fh):
-    # only allow alphabet and underscores, remove multiple spaces and lowercase
-    lines = re.sub('[^a-z_]+', '_',
+    # only allow alphabet,commas,periods,parethesis and underscores, remove multiple spaces and lowercase
+    lines = re.sub('[^a-z_,.()]+', '_',
                        " ".join(" ".join(str(x) for x in fh.readlines()).split())
                        .replace(" ", "_").lower())
     return lines
